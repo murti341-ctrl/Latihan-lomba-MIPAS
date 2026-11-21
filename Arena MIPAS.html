@@ -1,0 +1,928 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Arena MIPAS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Konsep: ruang hitam pekat dengan bangun ruang berkerangka neon melayang. Warna mata pelajaran: Matematika biru, IPA ungu, IPS jingga. */
+:root {
+  --bg: #000000;
+  --surface: #0c0c13;
+  --surface-2: #151520;
+  --line: #2c2c3d;
+  --fg: #f6f6fb;
+  --muted: #aaaabf;
+  --mtk: #38bdf8;
+  --ipa: #c084fc;
+  --ips: #fb923c;
+  --good: #34d399;
+  --bad: #fb7185;
+  --accent: var(--mtk);
+  --f-display: 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
+  --f-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 17px;
+  line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  min-height: 100vh;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+#bg3d { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; display: block; }
+.app { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding-bottom: 48px; }
+
+/* ---------- header ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px; }
+.brand { white-space: nowrap; display: flex; align-items: center; gap: 12px; background: none; border: 0; padding: 4px; font-family: var(--f-display); font-weight: 600; font-size: 1.25rem; letter-spacing: .02em; }
+.cube-wrap { width: 30px; height: 30px; perspective: 140px; display: inline-block; }
+.cube { position: relative; display: block; width: 30px; height: 30px; transform-style: preserve-3d; animation: cube 9s linear infinite; }
+.cube i { position: absolute; inset: 0; border: 2px solid var(--mtk); background: rgba(56, 189, 248, .1); }
+.cube i:nth-child(1) { transform: translateZ(15px); }
+.cube i:nth-child(2) { transform: rotateY(180deg) translateZ(15px); border-color: var(--ipa); background: rgba(192, 132, 252, .1); }
+.cube i:nth-child(3) { transform: rotateY(90deg) translateZ(15px); border-color: var(--ips); background: rgba(251, 146, 60, .1); }
+.cube i:nth-child(4) { transform: rotateY(-90deg) translateZ(15px); }
+.cube i:nth-child(5) { transform: rotateX(90deg) translateZ(15px); border-color: var(--ipa); }
+.cube i:nth-child(6) { transform: rotateX(-90deg) translateZ(15px); border-color: var(--ips); }
+@keyframes cube { from { transform: rotateX(-24deg) rotateY(0deg); } to { transform: rotateX(-24deg) rotateY(360deg); } }
+.top-r { display: flex; align-items: center; gap: 10px; }
+.score { font-family: var(--f-display); font-weight: 600; background: var(--surface); border: 2px solid var(--line); border-radius: 999px; padding: 4px 16px; white-space: nowrap; }
+.score b { margin-left: .35em; color: var(--accent); font-size: 1.15em; display: inline-block; min-width: 1.2ch; text-align: center; }
+.score.bump b { animation: bump .5s ease; }
+@keyframes bump { 40% { transform: scale(1.5) rotate(-6deg); } }
+.btn { white-space: nowrap; font-family: var(--f-display); font-weight: 500; border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 9px 18px; transition: transform .15s, border-color .15s, background .15s; }
+.btn:hover { border-color: var(--accent); transform: translateY(-2px); }
+.btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn[disabled] { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* ---------- start ---------- */
+.hero { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; padding-block: 18px 8px; }
+.eyebrow { font-family: var(--f-display); letter-spacing: .12em; text-transform: uppercase; font-size: .82rem; color: var(--muted); }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(2.3rem, 8vw, 3.8rem); line-height: 1.05; margin: 6px 0 12px; text-wrap: balance; }
+h1 span { background: linear-gradient(90deg, var(--mtk), var(--ipa) 55%, var(--ips)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { color: var(--muted); max-width: 46ch; margin: 0; }
+.hc-wrap { width: 150px; height: 150px; perspective: 600px; justify-self: center; }
+.hc { position: relative; width: 100px; height: 100px; margin: 25px; transform-style: preserve-3d; animation: hc 14s linear infinite; }
+.hc i { position: absolute; inset: 0; display: grid; place-items: center; font: 700 1.5rem var(--f-display); border: 3px solid var(--c); color: var(--c); background: color-mix(in srgb, var(--c) 14%, #000); font-style: normal; }
+.hc i:nth-child(1) { --c: var(--mtk); transform: translateZ(50px); }
+.hc i:nth-child(2) { --c: var(--ipa); transform: rotateY(180deg) translateZ(50px); }
+.hc i:nth-child(3) { --c: var(--ips); transform: rotateY(90deg) translateZ(50px); }
+.hc i:nth-child(4) { --c: var(--fg); transform: rotateY(-90deg) translateZ(50px); }
+.hc i:nth-child(5) { --c: var(--muted); transform: rotateX(90deg) translateZ(50px); }
+.hc i:nth-child(6) { --c: var(--muted); transform: rotateX(-90deg) translateZ(50px); }
+@keyframes hc { from { transform: rotateX(-22deg) rotateY(0deg); } to { transform: rotateX(-22deg) rotateY(360deg); } }
+.rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 22px 0 8px; padding: 0; list-style: none; }
+.rules li { background: rgba(12, 12, 19, .9); border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: .95rem; }
+.rules b { display: block; font-family: var(--f-display); font-weight: 600; font-size: 1.02rem; margin-bottom: 2px; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.35rem; margin: 26px 0 12px; }
+.modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.mode { text-align: left; background: rgba(12, 12, 19, .92); border: 2px solid var(--line); border-top: 6px solid var(--c); border-radius: 16px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 4px; transition: transform .18s, border-color .18s, box-shadow .18s; transform-style: preserve-3d; }
+.mode:hover { transform: perspective(700px) rotateX(4deg) translateY(-4px); border-color: var(--c); box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--c) 60%, transparent); }
+.m-name { font-family: var(--f-display); font-weight: 600; font-size: 1.3rem; color: var(--c); }
+.m-sub { color: var(--muted); font-size: .92rem; }
+.m-count { font-weight: 700; margin-top: 4px; }
+.m-prog { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.m-prog i { display: block; height: 100%; width: 0; background: var(--c); border-radius: 99px; transition: width .5s; }
+.m-note { font-size: .88rem; color: var(--muted); }
+
+/* ---------- quiz ---------- */
+.qhead { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-block: 6px 12px; }
+.chip { font-family: var(--f-display); font-weight: 600; color: var(--accent); border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, #000); border-radius: 999px; padding: 2px 14px; }
+.count { color: var(--muted); font-weight: 700; }
+.bar { flex: 1 1 140px; height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .4s; }
+.card { background: rgba(12, 12, 19, .94); border: 2px solid var(--line); border-radius: 20px; padding: clamp(16px, 4vw, 28px); box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--accent) 45%, transparent); }
+.qtext { font-family: var(--f-body); font-weight: 700; font-size: clamp(1.1rem, 3.2vw, 1.35rem); line-height: 1.5; margin: 0 0 16px; text-wrap: pretty; }
+.fig { display: block; max-width: 100%; height: auto; margin: 0 auto 16px; }
+.fig text { fill: var(--fg); font-family: var(--f-body); font-weight: 700; }
+.tbl-wrap { overflow-x: auto; margin-bottom: 16px; }
+.tbl { border-collapse: collapse; margin: 0 auto; min-width: 280px; }
+.tbl th, .tbl td { border: 2px solid var(--line); padding: 7px 14px; text-align: center; font-variant-numeric: tabular-nums; }
+.tbl th { background: var(--surface-2); color: var(--accent); font-family: var(--f-display); }
+.opts { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.opt { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; background: var(--surface-2); border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px 12px 12px; transition: transform .15s, border-color .15s, background .15s, opacity .2s; }
+.opt:not([disabled]):hover { border-color: var(--accent); transform: perspective(700px) rotateX(2deg) translateY(-2px); }
+.opt:not([disabled]):active { transform: scale(.985); }
+.opt[disabled] { cursor: default; }
+.hex { flex: none; width: 44px; height: 40px; display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; color: #000; background: var(--accent); clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%); }
+.otext { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.mark { flex: none; font-family: var(--f-display); font-weight: 700; font-size: 1.4rem; width: 1.6rem; text-align: center; }
+.opt.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, #000); animation: pop .45s ease; }
+.opt.correct .hex { background: var(--good); }
+.opt.correct .mark { color: var(--good); }
+.opt.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, #000); animation: shake .45s ease; }
+.opt.wrong .hex { background: var(--bad); }
+.opt.wrong .mark { color: var(--bad); }
+.opt.dim { opacity: .5; }
+@keyframes pop { 40% { transform: scale(1.03); } }
+@keyframes shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(4px); } }
+.fb { margin-top: 18px; border: 2px solid var(--line); border-left-width: 8px; border-radius: 14px; padding: 14px 18px; background: var(--surface); animation: rise .35s ease; }
+.fb.good { border-color: var(--good); }
+.fb.bad { border-color: var(--bad); }
+.fb h3 { margin: 0 0 4px; font-family: var(--f-display); font-weight: 600; font-size: 1.25rem; }
+.fb.good h3 { color: var(--good); }
+.fb.bad h3 { color: var(--bad); }
+.fb p { margin: 6px 0 0; }
+.fb .ans { font-weight: 800; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+.qnav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.cf { position: fixed; width: 12px; height: 12px; z-index: 60; pointer-events: none; }
+
+/* ---------- navigator ---------- */
+.ov { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, .975); overflow-y: auto; padding: max(18px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.ov-in { max-width: 760px; margin: 0 auto; }
+.ov-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ov h2 { margin: 6px 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: .9rem; margin: 4px 0 6px; }
+.legend span::before { content: ''; display: inline-block; width: 12px; height: 12px; margin-right: 6px; border-radius: 3px; vertical-align: -1px; background: var(--c, var(--surface-2)); border: 2px solid var(--c, var(--line)); }
+.ng-title { font-family: var(--f-display); font-weight: 600; color: var(--c); margin: 18px 0 8px; }
+.ng { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 8px; }
+.nq { height: 44px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface-2); font-family: var(--f-display); font-weight: 600; font-variant-numeric: tabular-nums; }
+.nq.ok { background: color-mix(in srgb, var(--good) 22%, #000); border-color: var(--good); color: var(--good); }
+.nq.no { background: color-mix(in srgb, var(--bad) 22%, #000); border-color: var(--bad); color: var(--bad); }
+.nq.cur { outline: 3px solid var(--fg); outline-offset: 2px; }
+
+/* ---------- result ---------- */
+.res { text-align: center; padding-block: 12px; }
+.ring { --p: 0; width: 190px; height: 190px; border-radius: 50%; margin: 10px auto 14px; display: grid; place-items: center; background: conic-gradient(var(--good) calc(var(--p) * 1%), var(--surface-2) 0); position: relative; }
+.ring::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; background: var(--bg); }
+.ring div { position: relative; font-family: var(--f-display); font-weight: 700; font-size: 2.6rem; line-height: 1; }
+.ring small { display: block; font-size: 1rem; color: var(--muted); font-weight: 500; margin-top: 4px; }
+.res h2 { margin: 8px 0; font-size: 1.7rem; }
+.rows { display: grid; gap: 12px; margin: 22px 0; text-align: left; }
+.row { display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; align-items: center; }
+.row b { font-family: var(--f-display); font-weight: 600; color: var(--c); }
+.row .bar { height: 12px; }
+.row .bar i { background: var(--c); }
+.row span { font-variant-numeric: tabular-nums; font-weight: 700; }
+.acts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 8px; }
+
+[data-sub="m"] { --accent: var(--mtk); }
+[data-sub="a"] { --accent: var(--ipa); }
+[data-sub="s"] { --accent: var(--ips); }
+
+@media (max-width: 640px) {
+  .hero { grid-template-columns: 1fr; }
+  .hc-wrap { order: -1; justify-self: start; }
+  .rules { grid-template-columns: 1fr; }
+  .modes { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 88px 1fr auto; }
+  .btn { padding: 10px 14px; }
+  .brand-name { display: none; }
+  .score { padding: 4px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<canvas id="bg3d" aria-hidden="true"></canvas>
+<div class="app">
+  <header class="top">
+    <button class="brand" id="home" type="button" aria-label="Kembali ke menu utama">
+      <span class="cube-wrap" aria-hidden="true"><span class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></span></span>
+      <span class="brand-name">Arena MIPAS</span>
+    </button>
+    <div class="top-r">
+      <div class="score" id="scorePill" hidden>Skor <b id="scoreNum">0</b></div>
+      <button class="btn" id="navBtn" type="button" hidden>Daftar soal</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="sStart" aria-labelledby="ttl">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Latihan lomba MIPAS SD · Tingkat kabupaten</div>
+          <h1 id="ttl">Taklukkan <span>100 soal</span> bangun ruang ilmu!</h1>
+          <p class="lead">Jawab soal Matematika, IPA, dan IPS. Hasilnya langsung kelihatan setelah kamu memilih jawaban.</p>
+        </div>
+        <div class="hc-wrap" aria-hidden="true"><div class="hc"><i>MTK</i><i>IPA</i><i>IPS</i><i>100</i><i></i><i></i></div></div>
+      </div>
+      <ul class="rules">
+        <li><b>Satu kesempatan</b>Setiap soal hanya bisa dijawab satu kali.</li>
+        <li><b>Benar skor 1</b>Salah skor 0. Skor penuh adalah 100.</li>
+        <li><b>Langsung tahu</b>Benar dapat pujian, salah dapat penjelasan.</li>
+      </ul>
+      <h2>Pilih latihanmu</h2>
+      <div class="modes" id="modes"></div>
+      <p class="m-note">Jawabanmu tersimpan di perangkat ini, jadi kamu bisa lanjut kapan saja.</p>
+    </section>
+
+    <section id="sQuiz" hidden aria-label="Soal latihan">
+      <div class="qhead">
+        <span class="chip" id="chip">Matematika</span>
+        <span class="count" id="count">Soal 1 dari 100</span>
+        <div class="bar" role="progressbar" aria-label="Soal yang sudah dijawab" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barWrap"><i id="barFill"></i></div>
+      </div>
+      <div class="card">
+        <p class="qtext" id="qtext"></p>
+        <div id="fig"></div>
+        <ol class="opts" id="opts" aria-label="Pilihan jawaban"></ol>
+        <div id="fb" role="status" aria-live="polite"></div>
+        <div class="qnav">
+          <button class="btn" id="prev" type="button">‹ Sebelumnya</button>
+          <button class="btn" id="next" type="button">Berikutnya ›</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="sResult" hidden aria-labelledby="rttl">
+      <div class="card res">
+        <div class="eyebrow">Hasil latihan</div>
+        <div class="ring" id="ring" role="img" aria-label="Skor"><div><span id="rScore">0</span><small id="rOf">dari 100</small></div></div>
+        <h2 id="rttl">Kerja bagus!</h2>
+        <p class="lead" id="rMsg" style="margin-inline:auto"></p>
+        <div class="rows" id="rRows"></div>
+        <div class="acts">
+          <button class="btn primary" id="rReview" type="button">Tinjau soal</button>
+          <button class="btn" id="rReset" type="button">Ulangi dari awal</button>
+          <button class="btn" id="rHome" type="button">Menu utama</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-label="Daftar soal" hidden>
+  <div class="ov-in">
+    <div class="ov-head"><h2>Daftar soal</h2><button class="btn" id="ovClose" type="button">Tutup</button></div>
+    <div class="legend"><span style="--c:var(--good)">Benar</span><span style="--c:var(--bad)">Salah</span><span>Belum dijawab</span></div>
+    <div id="ovBody"></div>
+    <div class="acts" style="margin-top:22px"><button class="btn primary" id="ovResult" type="button">Lihat skor</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const ARENA_Q = [];
+function add(sub, q, c, w, e, fig) { ARENA_Q.push({ sub: sub, q: q, c: c, w: w, e: e, fig: fig || null }); }
+
+/* ============ MATEMATIKA (30) ============ */
+add('m', `Hasil dari 24 − (−18) ÷ 3 + (−5) × 2 adalah ....`, `20`, [`8`, `4`, `30`],
+  `Kerjakan ÷ dan × lebih dulu: (−18) ÷ 3 = −6 dan (−5) × 2 = −10. Lalu 24 − (−6) + (−10) = 24 + 6 − 10 = 20.`);
+add('m', `FPB dari 48, 72, dan 120 adalah ....`, `24`, [`12`, `8`, `48`],
+  `48 = 2⁴ × 3, 72 = 2³ × 3², 120 = 2³ × 3 × 5. FPB mengambil faktor yang sama dengan pangkat terkecil: 2³ × 3 = 24.`);
+add('m', `KPK dari 12, 18, dan 30 adalah ....`, `180`, [`90`, `360`, `60`],
+  `12 = 2² × 3, 18 = 2 × 3², 30 = 2 × 3 × 5. KPK mengambil semua faktor dengan pangkat terbesar: 2² × 3² × 5 = 180.`);
+add('m', `Bu Rani punya 36 kue cokelat dan 48 kue keju. Kue-kue itu dibagi ke beberapa kotak. Setiap kotak berisi kue cokelat dalam jumlah yang sama dan kue keju dalam jumlah yang sama. Paling banyak ada berapa kotak?`, `12 kotak`, [`6 kotak`, `8 kotak`, `24 kotak`],
+  `Banyak kotak terbanyak = FPB dari 36 dan 48. 36 = 2² × 3², 48 = 2⁴ × 3, jadi FPB = 2² × 3 = 12. Setiap kotak berisi 3 kue cokelat dan 4 kue keju.`);
+add('m', `Lampu A menyala setiap 6 detik, lampu B setiap 8 detik, dan lampu C setiap 12 detik. Ketiganya menyala bersama pada detik ke-0. Dalam 3 menit berikutnya, ketiga lampu menyala bersama sebanyak ... kali.`, `7`, [`8`, `15`, `30`],
+  `KPK dari 6, 8, 12 adalah 24, jadi ketiganya menyala bersama setiap 24 detik. 3 menit = 180 detik. 180 ÷ 24 = 7,5 sehingga hanya 7 kali penuh (detik ke-24, 48, 72, 96, 120, 144, dan 168).`);
+add('m', `Hasil dari 2 3/4 + 1 5/6 − 1 1/2 adalah ....`, `3 1/12`, [`3 1/6`, `2 5/12`, `4 1/12`],
+  `Samakan penyebutnya menjadi 12: 33/12 + 22/12 − 18/12 = 37/12 = 3 1/12.`);
+add('m', `Urutan bilangan 3/8; 0,4; 37%; dan 7/20 dari yang terkecil ke terbesar adalah ....`, `7/20; 37%; 3/8; 0,4`, [`37%; 7/20; 3/8; 0,4`, `0,4; 3/8; 37%; 7/20`, `3/8; 7/20; 37%; 0,4`],
+  `Ubah semuanya ke desimal: 3/8 = 0,375; 0,4; 37% = 0,37; 7/20 = 0,35. Dari terkecil: 0,35 (7/20), 0,37 (37%), 0,375 (3/8), 0,4.`);
+add('m', `Kereta api berangkat pukul 22.45 dan tiba keesokan harinya pukul 05.20. Lama perjalanan kereta itu adalah ....`, `6 jam 35 menit`, [`6 jam 25 menit`, `7 jam 35 menit`, `5 jam 35 menit`],
+  `Dari 22.45 sampai 24.00 ada 1 jam 15 menit. Dari 00.00 sampai 05.20 ada 5 jam 20 menit. Jumlahnya 6 jam 35 menit.`);
+add('m', `3 windu 2 tahun sama dengan ... bulan.`, `312`, [`288`, `300`, `336`],
+  `1 windu = 8 tahun, jadi 3 windu = 24 tahun. Ditambah 2 tahun menjadi 26 tahun. 26 × 12 bulan = 312 bulan.`);
+add('m', `5 gros + 7 lusin + 3 kodi = ... buah.`, `864`, [`846`, `780`, `924`],
+  `1 gros = 144 buah, 1 lusin = 12 buah, 1 kodi = 20 buah. 5 × 144 = 720; 7 × 12 = 84; 3 × 20 = 60. Jumlahnya 720 + 84 + 60 = 864.`);
+add('m', `Dua rim kertas dibagikan sama banyak kepada 40 murid. Jika 1 rim = 500 lembar, setiap murid mendapat ... lembar.`, `25`, [`20`, `50`, `40`],
+  `2 rim = 2 × 500 = 1.000 lembar. 1.000 ÷ 40 = 25 lembar untuk setiap murid.`);
+add('m', `Titik A(−3, 2), B(4, 2), dan C(4, −3) adalah tiga titik sudut persegi panjang ABCD. Koordinat titik D adalah ....`, `(−3, −3)`, [`(−3, 3)`, `(3, −3)`, `(−4, −3)`],
+  `Sisi AB mendatar di y = 2 dan sisi BC tegak di x = 4. Titik D segaris tegak dengan A (x = −3) dan segaris mendatar dengan C (y = −3), jadi D(−3, −3).`,
+  { t: 'coord', x: [-4, 5], y: [-4, 3], pts: [['A', -3, 2], ['B', 4, 2], ['C', 4, -3]], line: 1, alt: 'Bidang koordinat dengan titik A(−3, 2), B(4, 2), dan C(4, −3)' });
+add('m', `Titik P(−2, 1), Q(4, 1), dan R(1, 5) membentuk segitiga PQR. Luas segitiga PQR adalah ... satuan luas.`, `12`, [`24`, `20`, `15`],
+  `Alas PQ = 4 − (−2) = 6 satuan. Tinggi dari R ke garis PQ = 5 − 1 = 4 satuan. Luas = ½ × 6 × 4 = 12.`,
+  { t: 'coord', x: [-3, 5], y: [-1, 6], pts: [['P', -2, 1], ['Q', 4, 1], ['R', 1, 5]], poly: 1, alt: 'Segitiga PQR pada bidang koordinat dengan P(−2, 1), Q(4, 1), R(1, 5)' });
+add('m', `Keliling sebuah lingkaran 88 cm (π = 22/7). Luas lingkaran tersebut adalah ....`, `616 cm²`, [`154 cm²`, `308 cm²`, `1.232 cm²`],
+  `Keliling = 2πr = 88, jadi r = 88 ÷ (2 × 22/7) = 14 cm. Luas = πr² = 22/7 × 14 × 14 = 616 cm².`);
+add('m', `Persegi bersisi 14 cm memuat sebuah lingkaran berdiameter 14 cm (π = 22/7). Luas daerah persegi di luar lingkaran (daerah berwarna) adalah ....`, `42 cm²`, [`154 cm²`, `98 cm²`, `84 cm²`],
+  `Luas persegi = 14 × 14 = 196 cm². Jari-jari lingkaran 7 cm, luasnya 22/7 × 7 × 7 = 154 cm². Luas daerah berwarna = 196 − 154 = 42 cm².`,
+  { t: 'arsir' });
+add('m', `Sebuah trapesium memiliki sisi sejajar 12 cm dan 20 cm, serta tinggi 9 cm. Luas trapesium itu adalah ....`, `144 cm²`, [`108 cm²`, `288 cm²`, `180 cm²`],
+  `Luas trapesium = ½ × (jumlah sisi sejajar) × tinggi = ½ × (12 + 20) × 9 = 16 × 9 = 144 cm².`);
+add('m', `Akuarium berbentuk balok berukuran 60 cm × 40 cm × 30 cm diisi air sampai 3/4 bagian. Banyak air dalam akuarium adalah ... liter.`, `54`, [`72`, `36`, `45`],
+  `Volume penuh = 60 × 40 × 30 = 72.000 cm³ = 72 liter (1 liter = 1.000 cm³). Air yang terisi = 3/4 × 72 = 54 liter.`);
+add('m', `Prisma segi enam memiliki ... sisi, ... rusuk, dan ... titik sudut.`, `8 sisi, 18 rusuk, 12 titik sudut`, [`6 sisi, 12 rusuk, 12 titik sudut`, `8 sisi, 12 rusuk, 18 titik sudut`, `7 sisi, 18 rusuk, 14 titik sudut`],
+  `Sisi: 6 sisi tegak + alas + tutup = 8. Rusuk: 6 di alas + 6 di tutup + 6 tegak = 18. Titik sudut: 6 di alas + 6 di tutup = 12.`);
+add('m', `Volume tabung dengan jari-jari 7 cm dan tinggi 10 cm (π = 22/7) adalah ....`, `1.540 cm³`, [`440 cm³`, `770 cm³`, `3.080 cm³`],
+  `Volume tabung = π × r² × t = 22/7 × 7 × 7 × 10 = 1.540 cm³. (Angka 440 adalah luas selimut, bukan volume.)`);
+add('m', `Pada segitiga ABC, besar ∠A = 2x, ∠B = (3x − 10)°, dan ∠C = (x + 40)°. Besar ∠B adalah ....`, `65°`, [`50°`, `75°`, `55°`],
+  `Jumlah sudut segitiga 180°. 2x + (3x − 10) + (x + 40) = 180 → 6x + 30 = 180 → x = 25. Maka ∠B = 3 × 25 − 10 = 65°.`);
+add('m', `Besar sudut terkecil antara jarum pendek dan jarum panjang jam pada pukul 04.40 adalah ....`, `100°`, [`80°`, `120°`, `140°`],
+  `Jarum panjang di angka 8: 8 × 30° = 240°. Jarum pendek: 4 × 30° + 40/60 × 30° = 120° + 20° = 140°. Selisihnya 240° − 140° = 100°.`);
+add('m', `Pada peta berskala 1 : 2.500.000, jarak dua kota adalah 8 cm. Jarak sebenarnya kedua kota adalah ... km.`, `200`, [`20`, `2.000`, `25`],
+  `Jarak sebenarnya = 8 × 2.500.000 = 20.000.000 cm. Ubah ke km: 20.000.000 ÷ 100.000 = 200 km.`);
+add('m', `Uang Ali dan Budi berbanding 3 : 5. Selisih uang mereka Rp120.000. Jumlah uang mereka berdua adalah ....`, `Rp480.000`, [`Rp360.000`, `Rp300.000`, `Rp720.000`],
+  `Selisih 5 − 3 = 2 bagian = Rp120.000, jadi 1 bagian = Rp60.000. Jumlah = 3 + 5 = 8 bagian = 8 × 60.000 = Rp480.000.`);
+add('m', `Sebuah sepeda motor melaju dengan kecepatan tetap 45 km/jam selama 2 jam 40 menit. Jarak yang ditempuh adalah ... km.`, `120`, [`90`, `135`, `100`],
+  `2 jam 40 menit = 2 2/3 jam = 8/3 jam. Jarak = kecepatan × waktu = 45 × 8/3 = 120 km.`);
+add('m', `Kota P dan kota Q berjarak 250 km. Pukul 07.00, Ayu naik mobil dari P menuju Q dengan kecepatan 60 km/jam. Pada saat yang sama, Beni naik mobil dari Q menuju P dengan kecepatan 40 km/jam. Mereka bertemu pada pukul ....`, `09.30`, [`09.00`, `10.00`, `09.45`],
+  `Mereka saling mendekat, jadi kecepatan gabungan = 60 + 40 = 100 km/jam. Waktu bertemu = 250 ÷ 100 = 2,5 jam = 2 jam 30 menit. Pukul 07.00 + 2 jam 30 menit = 09.30.`);
+add('m', `Pak Dedi membeli 40 kg jeruk dengan harga Rp18.000 per kg. Sebanyak 5 kg jeruk busuk, sisanya dijual Rp22.000 per kg. Hasil usaha Pak Dedi adalah ....`, `untung Rp50.000`, [`untung Rp160.000`, `rugi Rp50.000`, `untung Rp90.000`],
+  `Modal = 40 × 18.000 = Rp720.000. Jeruk yang laku = 40 − 5 = 35 kg, hasil penjualan = 35 × 22.000 = Rp770.000. Untung = 770.000 − 720.000 = Rp50.000.`);
+add('m', `Sepatu seharga Rp250.000 didiskon 20%. Di kasir, harga setelah diskon masih dipotong lagi 10%. Harga yang harus dibayar adalah ....`, `Rp180.000`, [`Rp175.000`, `Rp200.000`, `Rp190.000`],
+  `Diskon 20%: 250.000 × 80% = 200.000. Potongan 10% dihitung dari harga baru: 200.000 × 90% = Rp180.000. (Bukan diskon 30% sekaligus.)`);
+add('m', `Rata-rata nilai 5 kali ulangan Dimas adalah 82. Setelah ulangan keenam, rata-ratanya menjadi 84. Nilai ulangan keenam Dimas adalah ....`, `94`, [`90`, `88`, `84`],
+  `Jumlah 5 nilai = 5 × 82 = 410. Jumlah 6 nilai = 6 × 84 = 504. Nilai ulangan keenam = 504 − 410 = 94.`);
+add('m', `Data nilai: 3, 5, 6, 6, 7, 8, 8, 8, 9, 10. Selisih antara modus dan median data tersebut adalah ....`, `0,5`, [`1`, `0`, `1,5`],
+  `Modus = 8 (muncul 3 kali). Median: data ke-5 dan ke-6 adalah 7 dan 8, jadi median = (7 + 8) ÷ 2 = 7,5. Selisih = 8 − 7,5 = 0,5.`);
+add('m', `Tabel di bawah menunjukkan nilai 25 murid. Banyak murid yang nilainya di atas rata-rata adalah ... anak.`, `17`, [`8`, `15`, `11`],
+  `Jumlah nilai = 6×3 + 7×5 + 8×9 + 9×6 + 10×2 = 18 + 35 + 72 + 54 + 20 = 199. Rata-rata = 199 ÷ 25 = 7,96. Nilai di atas 7,96 adalah 8, 9, dan 10: 9 + 6 + 2 = 17 anak.`,
+  { t: 'table', head: ['Nilai', '6', '7', '8', '9', '10'], rows: [['Banyak murid', '3', '5', '9', '6', '2']] });
+
+/* ============ IPA (30) ============ */
+add('a', `Daun kaktus berubah menjadi duri. Ciri khusus ini membantu kaktus untuk ....`, `mengurangi penguapan air di tempat yang kering`, [`menangkap serangga sebagai makanan`, `menyerap lebih banyak cahaya matahari`, `menyimpan makanan cadangan`],
+  `Kaktus hidup di gurun yang kering. Daun yang kecil seperti duri membuat air tidak mudah menguap. Air disimpan di batangnya yang tebal.`);
+add('a', `Burung pelatuk memiliki paruh yang keras dan runcing serta lidah yang panjang. Ciri tersebut berguna untuk ....`, `melubangi batang pohon dan mengambil serangga di dalamnya`, [`menyaring makanan di dalam lumpur`, `mencabik daging bangkai`, `menghisap madu dari bunga`],
+  `Paruh pelatuk yang kuat dipakai melubangi kayu, lalu lidahnya yang panjang menjulur untuk menangkap serangga di dalam lubang.`);
+add('a', `Pasangan tumbuhan dan cara berkembang biak vegetatif alami yang tepat adalah ....`, `Kentang – umbi batang`, [`Jahe – umbi lapis`, `Bawang merah – rimpang`, `Stroberi – tunas pada daun`],
+  `Kentang berkembang biak dengan umbi batang. Jahe memakai rimpang, bawang merah memakai umbi lapis, dan stroberi memakai geragih (stolon). Tunas pada daun dimiliki cocor bebek.`);
+add('a', `Hewan berikut yang mengalami metamorfosis tidak sempurna adalah ....`, `Belalang`, [`Kupu-kupu`, `Nyamuk`, `Kumbang`],
+  `Belalang berubah dari telur, nimfa, lalu dewasa tanpa tahap kepompong. Kupu-kupu, nyamuk, dan kumbang melewati tahap pupa (kepompong), sehingga metamorfosisnya sempurna.`);
+add('a', `Petani di sebuah sawah memburu dan membunuh banyak ular. Akibat yang paling mungkin terjadi adalah ....`, `populasi tikus meningkat dan padi banyak dimakan tikus`, [`populasi tikus menurun dan hasil panen naik`, `padi berkurang karena kekurangan air`, `populasi elang bertambah karena ular banyak`],
+  `Ular adalah pemangsa tikus. Jika ular berkurang, tikus berkembang biak tanpa terkendali dan merusak padi. Inilah pentingnya menjaga keseimbangan ekosistem.`);
+add('a', `Rantai makanan: rumput → belalang → katak → ular → elang. Jika katak di tempat itu hampir punah, yang paling mungkin terjadi adalah ....`, `belalang bertambah banyak dan ular kekurangan makanan`, [`belalang berkurang dan ular bertambah banyak`, `rumput dan belalang sama-sama bertambah banyak`, `elang bertambah banyak karena ular melimpah`],
+  `Katak memakan belalang, sehingga tanpa katak belalang bertambah banyak. Ular yang makanannya katak jadi kekurangan makanan. Semua makhluk hidup dalam rantai makanan saling bergantung.`);
+add('a', `Pelestarian makhluk hidup di luar habitat aslinya (ex situ) dilakukan di ....`, `Kebun binatang`, [`Cagar alam`, `Taman nasional`, `Suaka margasatwa`],
+  `Ex situ berarti di luar habitat asli, misalnya kebun binatang, kebun raya, dan penangkaran. Cagar alam, taman nasional, dan suaka margasatwa melindungi makhluk hidup di habitat aslinya (in situ).`);
+add('a', `Hasil fotosintesis adalah ....`, `glukosa (gula) dan oksigen`, [`karbon dioksida dan air`, `glukosa dan karbon dioksida`, `oksigen dan air saja`],
+  `Fotosintesis: air + karbon dioksida + cahaya matahari → glukosa + oksigen. Prosesnya terjadi di kloroplas yang mengandung klorofil.`);
+add('a', `Kelompok bahan berikut yang semuanya isolator adalah ....`, `Karet, kaca, plastik, kayu kering`, [`Besi, karet, kaca, plastik`, `Plastik, kayu kering, aluminium, kaca`, `Karet, grafit pensil, kaca, kayu kering`],
+  `Isolator tidak menghantarkan listrik dengan baik: karet, kaca, plastik, kayu kering. Besi dan aluminium adalah logam yang konduktor, dan grafit pensil juga menghantarkan listrik.`);
+add('a', `Kabel listrik terdiri atas inti tembaga yang dibungkus plastik. Bahan itu dipilih karena ....`, `tembaga konduktor yang baik dan plastik isolator yang mencegah sengatan listrik`, [`tembaga isolator dan plastik konduktor`, `tembaga dan plastik sama-sama konduktor yang baik`, `tembaga dan plastik sama-sama isolator yang baik`],
+  `Tembaga menghantarkan arus listrik dengan baik. Plastik membungkusnya agar arus tidak mengalir ke tangan kita dan tidak terjadi korsleting.`);
+add('a', `Kelompok perubahan benda berikut yang semuanya perubahan kimia adalah ....`, `Besi berkarat, buah membusuk, kayu terbakar`, [`Es mencair, besi berkarat, kayu terbakar`, `Gula larut, kertas dirobek, buah membusuk`, `Air menguap, lilin meleleh, kayu terbakar`],
+  `Perubahan kimia menghasilkan zat baru: besi berkarat, buah membusuk, dan kayu terbakar. Es mencair, gula larut, kertas dirobek, air menguap, dan lilin meleleh hanya mengubah bentuk atau wujud (perubahan fisika).`);
+add('a', `Sebuah lemari didorong Ani dengan gaya 30 N ke kanan dan Budi dengan gaya 18 N ke kanan. Dari arah berlawanan, Cici mendorong dengan gaya 12 N ke kiri. Resultan gaya pada lemari adalah ....`, `36 N ke kanan`, [`60 N ke kanan`, `36 N ke kiri`, `24 N ke kanan`],
+  `Gaya searah dijumlahkan: 30 + 18 = 48 N ke kanan. Gaya berlawanan arah dikurangkan: 48 − 12 = 36 N. Arahnya ke kanan, karena gaya ke kanan lebih besar.`);
+add('a', `Penumpang bus terdorong ke depan ketika bus direm mendadak. Peristiwa ini terjadi karena ....`, `tubuh penumpang cenderung mempertahankan geraknya (kelembaman)`, [`bus menarik tubuh penumpang ke depan`, `gaya gesek antara penumpang dan kursi sangat besar`, `gaya gravitasi tiba-tiba bertambah`],
+  `Benda yang bergerak cenderung terus bergerak, itulah kelembaman (inersia). Saat bus berhenti, tubuh penumpang masih ingin bergerak maju.`);
+add('a', `Salah satu kelebihan rangkaian paralel pada lampu-lampu di rumah adalah ....`, `jika satu lampu mati, lampu yang lain tetap menyala`, [`jika satu lampu mati, semua lampu ikut mati`, `lampu-lampu menyala lebih redup daripada rangkaian seri`, `arus listrik hanya punya satu jalur`],
+  `Pada rangkaian paralel, setiap lampu punya jalur arus sendiri. Jika satu lampu putus, lampu lain tetap menyala dengan terang yang sama.`);
+add('a', `Perubahan energi yang terjadi pada senter yang menyala dengan baterai adalah ....`, `energi kimia → energi listrik → energi cahaya`, [`energi listrik → energi kimia → energi cahaya`, `energi cahaya → energi listrik → energi kimia`, `energi kimia → energi panas → energi listrik`],
+  `Baterai menyimpan energi kimia. Baterai mengubahnya menjadi energi listrik, lalu lampu senter mengubahnya menjadi energi cahaya (dan sedikit panas).`);
+add('a', `Sebuah lampu 40 watt menyala 10 jam setiap hari. Energi listrik yang dipakai selama 30 hari adalah ... kWh.`, `12`, [`1,2`, `120`, `400`],
+  `Energi = daya × waktu = 40 W × 10 jam × 30 hari = 12.000 Wh. Dibagi 1.000 menjadi 12 kWh.`);
+add('a', `Planet yang paling panas di Tata Surya, meskipun bukan yang terdekat dengan Matahari, adalah ....`, `Venus`, [`Merkurius`, `Mars`, `Jupiter`],
+  `Venus diselimuti atmosfer tebal yang kaya karbon dioksida. Panas terperangkap (efek rumah kaca), suhunya sekitar 460°C, lebih panas daripada Merkurius yang lebih dekat ke Matahari.`);
+add('a', `Sabuk asteroid terletak di antara orbit planet ....`, `Mars dan Jupiter`, [`Bumi dan Mars`, `Jupiter dan Saturnus`, `Saturnus dan Uranus`],
+  `Urutan planet: Merkurius, Venus, Bumi, Mars, Jupiter, Saturnus, Uranus, Neptunus. Ribuan batuan antariksa (asteroid) mengorbit di antara Mars dan Jupiter.`);
+add('a', `Peristiwa berikut yang disebabkan oleh revolusi Bumi adalah ....`, `pergantian musim`, [`pergantian siang dan malam`, `perbedaan waktu di berbagai daerah`, `gerak semu harian Matahari`],
+  `Revolusi adalah peredaran Bumi mengelilingi Matahari (±365¼ hari). Akibatnya antara lain pergantian musim dan gerak semu tahunan Matahari. Siang-malam, perbedaan waktu, dan gerak semu harian disebabkan rotasi Bumi.`);
+add('a', `Gerhana Matahari terjadi apabila ....`, `Bulan berada di antara Matahari dan Bumi pada satu garis lurus`, [`Bumi berada di antara Matahari dan Bulan`, `Matahari berada di antara Bumi dan Bulan`, `Bulan berada di orbit terjauh dari Bumi`],
+  `Saat gerhana Matahari, Bulan (fase bulan baru) menutupi sebagian atau seluruh cahaya Matahari. Pada gerhana Bulan, Bumi yang berada di antara Matahari dan Bulan.`);
+add('a', `Pensil di dalam gelas berisi air tampak patah di permukaan air. Peristiwa ini disebabkan oleh ....`, `pembiasan cahaya`, [`pemantulan cahaya`, `penguraian cahaya`, `penyerapan cahaya`],
+  `Cahaya membelok ketika berpindah dari air ke udara karena kerapatan kedua zat berbeda. Pembelokan cahaya ini disebut pembiasan (refraksi).`);
+add('a', `Seorang anak berdiri 60 cm di depan cermin datar. Jarak anak itu ke bayangannya adalah ....`, `120 cm`, [`30 cm`, `60 cm`, `180 cm`],
+  `Pada cermin datar, jarak bayangan ke cermin sama dengan jarak benda ke cermin, yaitu 60 cm. Jarak anak ke bayangannya = 60 + 60 = 120 cm.`);
+add('a', `Buku berwarna biru tampak biru karena buku itu ....`, `memantulkan cahaya biru dan menyerap warna lainnya`, [`menyerap cahaya biru dan memantulkan warna lainnya`, `memantulkan semua warna cahaya`, `menyerap semua warna cahaya`],
+  `Warna benda yang kita lihat adalah warna cahaya yang dipantulkan ke mata. Benda biru memantulkan biru, sedangkan warna lain diserap.`);
+add('a', `Sebatang magnet dipotong menjadi tiga bagian. Keadaan potongan magnet tersebut adalah ....`, `setiap potongan memiliki kutub utara dan kutub selatan`, [`hanya potongan tengah yang memiliki dua kutub`, `potongan di ujung hanya memiliki satu kutub`, `ketiganya kehilangan sifat kemagnetan`],
+  `Magnet tidak pernah punya satu kutub saja. Setiap potongan, sekecil apa pun, tetap menjadi magnet baru dengan kutub utara dan kutub selatan.`);
+add('a', `Kelompok benda berikut yang semuanya dapat ditarik magnet adalah ....`, `Paku besi, peniti baja, kawat nikel`, [`Paku besi, kunci kuningan, jarum baja`, `Kawat tembaga, penggaris plastik, kertas`, `Aluminium foil, gelas kaca, karet`],
+  `Benda magnetik adalah besi, baja, nikel, dan kobalt. Kuningan, tembaga, aluminium, plastik, kertas, kaca, dan karet tidak ditarik magnet.`);
+add('a', `Batu marmer terbentuk dari batu kapur yang mengalami suhu dan tekanan sangat tinggi di dalam Bumi. Marmer termasuk batuan ....`, `metamorf`, [`beku`, `sedimen`, `vulkanik`],
+  `Batuan metamorf adalah batuan yang berubah bentuk karena panas dan tekanan. Batuan beku berasal dari pembekuan magma, sedangkan batuan sedimen berasal dari endapan.`);
+add('a', `Dua perubahan wujud berikut yang sama-sama melepaskan kalor adalah ....`, `mengembun dan membeku`, [`menguap dan mencair`, `menyublim dan menguap`, `mencair dan mengembun`],
+  `Melepas kalor: membeku, mengembun, dan mengkristal. Menyerap kalor: mencair, menguap, dan menyublim.`);
+add('a', `Es batu sedang mencair di dalam gelas. Selama masih ada es, suhu campuran es dan air tetap 0°C. Hal ini terjadi karena ....`, `kalor yang diterima dipakai untuk mengubah es menjadi air, bukan untuk menaikkan suhu`, [`es tidak menerima kalor dari udara sekitar`, `suhu air selalu sama dengan suhu ruangan`, `seluruh kalor langsung hilang ke udara`],
+  `Selama perubahan wujud berlangsung, kalor dipakai untuk memutus ikatan antarpartikel es. Karena itu suhu tidak naik sampai semua es habis mencair.`);
+add('a', `Urutan jalur udara pada sistem pernapasan manusia yang benar adalah ....`, `hidung → faring → laring → trakea → bronkus → alveolus`, [`hidung → laring → faring → trakea → bronkus → alveolus`, `hidung → faring → trakea → laring → bronkus → alveolus`, `hidung → faring → laring → bronkus → trakea → alveolus`],
+  `Udara masuk lewat hidung, faring (tenggorokan), laring (pangkal tenggorokan), trakea (batang tenggorokan), bronkus, lalu alveolus. Pertukaran oksigen dan karbon dioksida terjadi di alveolus.`);
+add('a', `Sebuah beban 300 N diangkat menggunakan tuas. Lengan beban 20 cm dan lengan kuasa 60 cm. Besar kuasa yang diperlukan adalah ....`, `100 N`, [`900 N`, `150 N`, `50 N`],
+  `Pada tuas berlaku kuasa × lengan kuasa = beban × lengan beban. K × 60 = 300 × 20, jadi K = 6.000 ÷ 60 = 100 N.`);
+
+/* ============ IPS (40) ============ */
+add('s', `Manakah peta yang menggambarkan wilayah dengan paling rinci?`, `Peta berskala 1 : 50.000`, [`Peta berskala 1 : 250.000`, `Peta berskala 1 : 1.000.000`, `Peta berskala 1 : 5.000.000`],
+  `Semakin kecil angka pembandingnya, semakin besar skalanya dan semakin rinci petanya. Skala 1 : 50.000 adalah skala terbesar di antara pilihan tersebut.`);
+add('s', `Pada peta topografi, garis kontur yang saling berdekatan (rapat) menunjukkan daerah yang ....`, `lerengnya curam`, [`lerengnya landai`, `berupa dataran rendah`, `berupa perairan`],
+  `Garis kontur menghubungkan titik yang tingginya sama. Jika rapat, ketinggian berubah cepat dalam jarak pendek, artinya lerengnya curam.`);
+add('s', `Pertandingan bulu tangkis dimulai pukul 19.30 WIB di Jakarta. Penonton di Jayapura menyaksikan siaran langsungnya pada pukul ....`, `21.30 WIT`, [`17.30 WIT`, `20.30 WIT`, `22.30 WIT`],
+  `WIB = UTC+7, WITA = UTC+8, WIT = UTC+9. WIT lebih cepat 2 jam daripada WIB, jadi 19.30 + 2 jam = 21.30 WIT.`);
+add('s', `Kota P berada pada 105° BT dan kota Q pada 120° BT. Jika di kota P pukul 10.00, maka di kota Q pukul ....`, `11.00`, [`09.00`, `12.00`, `10.30`],
+  `Setiap selisih bujur 15° berbeda waktu 1 jam. Selisih bujur P dan Q = 15°, jadi beda 1 jam. Q lebih ke timur sehingga waktunya lebih awal: 10.00 + 1 jam = 11.00.`);
+add('s', `Kerajaan Hindu tertua di Indonesia yang diperintah oleh Raja Mulawarman adalah ....`, `Kutai`, [`Tarumanegara`, `Kalingga`, `Sriwijaya`],
+  `Kutai berdiri sekitar abad ke-4 di Kalimantan Timur. Buktinya tujuh yupa (tiang batu) yang menyebut nama Mulawarman.`);
+add('s', `Kerajaan Sriwijaya menjadi besar dan kaya terutama karena ....`, `menguasai jalur perdagangan di Selat Malaka`, [`memiliki tanah yang sangat subur untuk padi`, `menutup diri dari pedagang asing`, `letaknya jauh dari jalur pelayaran`],
+  `Sriwijaya berpusat di Palembang, Sumatra Selatan. Kerajaan ini memungut pajak dari kapal yang lewat dan menjadi pusat pendidikan agama Buddha.`);
+add('s', `Candi Borobudur yang bercorak Buddha dibangun pada masa pemerintahan Wangsa ....`, `Syailendra`, [`Sanjaya`, `Isyana`, `Rajasa`],
+  `Borobudur di Magelang dibangun oleh Wangsa Syailendra (Mataram Kuno) sekitar abad ke-8 sampai ke-9. Wangsa Sanjaya beragama Hindu dan membangun candi-candi Hindu.`);
+add('s', `Semboyan "Bhinneka Tunggal Ika" berasal dari kitab Sutasoma karangan ....`, `Mpu Tantular`, [`Mpu Prapanca`, `Mpu Sindok`, `Mpu Kanwa`],
+  `Kitab Sutasoma ditulis Mpu Tantular pada masa Majapahit. Mpu Prapanca menulis kitab Negarakertagama.`);
+add('s', `Kerajaan Islam pertama di Indonesia adalah ....`, `Samudra Pasai`, [`Demak`, `Mataram Islam`, `Banten`],
+  `Samudra Pasai di Aceh Utara berdiri sekitar abad ke-13. Raja pertamanya adalah Sultan Malik as-Saleh.`);
+add('s', `Raja Mataram Islam yang dua kali menyerang VOC di Batavia (tahun 1628 dan 1629) adalah ....`, `Sultan Agung`, [`Sultan Hasanuddin`, `Sultan Ageng Tirtayasa`, `Sultan Iskandar Muda`],
+  `Sultan Agung memerintah Mataram Islam (1613–1645). Sultan Hasanuddin dari Gowa, Sultan Ageng Tirtayasa dari Banten, dan Sultan Iskandar Muda dari Aceh.`);
+add('s', `Sultan Hasanuddin dari Kerajaan Gowa dijuluki oleh Belanda sebagai ....`, `Ayam Jantan dari Timur`, [`Harimau dari Timur`, `Singa dari Barat`, `Elang dari Utara`],
+  `Sultan Hasanuddin gigih melawan VOC dan akhirnya dipaksa menandatangani Perjanjian Bongaya (1667). Julukannya Ayam Jantan dari Timur.`);
+add('s', `Daratan sempit yang menjorok jauh ke laut disebut ....`, `tanjung`, [`teluk`, `selat`, `delta`],
+  `Tanjung adalah daratan yang menjorok ke laut. Teluk adalah laut yang menjorok ke daratan, dan selat adalah perairan sempit antara dua pulau.`);
+add('s', `Daratan baru berbentuk segitiga di muara sungai yang terbentuk dari endapan lumpur disebut ....`, `delta`, [`ngarai`, `teluk`, `lembah`],
+  `Sungai membawa lumpur dan pasir ke muara. Endapan itu menumpuk menjadi delta, contohnya Delta Mahakam di Kalimantan Timur.`);
+add('s', `Gunung tertinggi di Indonesia adalah ....`, `Puncak Jaya (Papua)`, [`Gunung Kerinci (Jambi)`, `Gunung Semeru (Jawa Timur)`, `Gunung Rinjani (Nusa Tenggara Barat)`],
+  `Puncak Jaya setinggi sekitar 4.884 m. Gunung Kerinci adalah gunung api tertinggi di Indonesia (3.805 m), dan Semeru adalah gunung tertinggi di Pulau Jawa.`);
+add('s', `Lagu "Indonesia Raya" pertama kali diperdengarkan pada Kongres Pemuda II tahun 1928 oleh ....`, `W.R. Supratman`, [`Ismail Marzuki`, `C. Simanjuntak`, `Ki Hajar Dewantara`],
+  `Wage Rudolf Supratman memainkan lagu Indonesia Raya dengan biola pada penutupan Kongres Pemuda II, 28 Oktober 1928.`);
+add('s', `Pada sidang BPUPKI tanggal 1 Juni 1945, tokoh yang mengemukakan gagasan dasar negara dengan nama Pancasila adalah ....`, `Ir. Soekarno`, [`Mohammad Yamin`, `Soepomo`, `Mohammad Hatta`],
+  `Mohammad Yamin berpidato pada 29 Mei dan Soepomo pada 31 Mei 1945. Soekarno mengemukakan Pancasila pada 1 Juni, karena itu tanggal 1 Juni diperingati sebagai Hari Lahir Pancasila.`);
+add('s', `Golongan muda membawa Soekarno dan Hatta ke Rengasdengklok pada 16 Agustus 1945 dengan tujuan ....`, `menjauhkan mereka dari pengaruh Jepang dan mendesak agar segera memproklamasikan kemerdekaan`, [`menyembunyikan mereka dari pasukan Sekutu`, `menunggu janji kemerdekaan dari pemerintah Jepang`, `beristirahat setelah sidang PPKI`],
+  `Golongan muda (Sukarni, Wikana, Chairul Saleh, dan kawan-kawan) ingin proklamasi dilakukan secepatnya tanpa menunggu Jepang. Proklamasi akhirnya dibacakan pada 17 Agustus 1945.`);
+add('s', `Tokoh yang membakar semangat arek-arek Surabaya melalui siaran radio pada pertempuran 10 November 1945 adalah ....`, `Bung Tomo`, [`Jenderal Sudirman`, `Moestopo`, `Mohammad Hatta`],
+  `Sutomo (Bung Tomo) berpidato lewat radio dengan teriakan "Allahu Akbar!" dan "Merdeka!". Tanggal 10 November kemudian diperingati sebagai Hari Pahlawan.`);
+add('s', `Belanda mengakui kedaulatan Indonesia pada 27 Desember 1949 sebagai hasil dari ....`, `Konferensi Meja Bundar (KMB)`, [`Perjanjian Linggarjati`, `Perjanjian Renville`, `Perjanjian Roem–Royen`],
+  `KMB berlangsung di Den Haag, Belanda (23 Agustus – 2 November 1949). Hasilnya, Belanda menyerahkan kedaulatan kepada Republik Indonesia Serikat pada 27 Desember 1949.`);
+add('s', `Pak Udin membeli buah dari petani lalu menjualnya di pasar. Kegiatan ekonomi yang dilakukan Pak Udin adalah ....`, `distribusi`, [`produksi`, `konsumsi`, `investasi`],
+  `Distribusi adalah kegiatan menyalurkan barang dari produsen (petani) sampai ke konsumen. Pedagang dan pengangkut barang termasuk pelaku distribusi.`);
+add('s', `Pekerjaan berikut yang termasuk penghasil jasa adalah ....`, `Sopir angkot`, [`Petani padi`, `Pengrajin gerabah`, `Nelayan`],
+  `Jasa adalah layanan yang dirasakan manfaatnya tanpa berbentuk barang, seperti sopir, guru, dan dokter. Petani, pengrajin, dan nelayan menghasilkan barang.`);
+add('s', `Sebelum membeli sepatu, Dina membandingkan harga dan mutu di beberapa toko, lalu memilih yang murah tetapi awet. Sikap Dina sesuai dengan ....`, `prinsip ekonomi`, [`prinsip konsumtif`, `prinsip monopoli`, `prinsip barter`],
+  `Prinsip ekonomi: dengan pengorbanan sekecil-kecilnya memperoleh hasil sebesar-besarnya. Dina berhemat tetapi tetap mendapat barang bermutu.`);
+add('s', `Kebutuhan yang bersifat mewah dan dipenuhi setelah kebutuhan primer dan sekunder terpenuhi disebut kebutuhan tersier. Contohnya adalah ....`, `mobil mewah`, [`beras`, `seragam sekolah`, `sepeda untuk berangkat sekolah`],
+  `Beras (pangan) dan seragam sekolah (sandang) adalah kebutuhan pokok, sedangkan sepeda untuk sekolah termasuk kebutuhan sekunder. Mobil mewah termasuk kebutuhan tersier.`);
+add('s', `Mesin jahit milik seorang penjahit termasuk alat pemuas kebutuhan berupa ....`, `barang modal`, [`barang konsumsi`, `jasa`, `barang bebas`],
+  `Barang modal dipakai untuk menghasilkan barang atau jasa lain. Barang konsumsi dipakai langsung, jasa berupa layanan, dan barang bebas tersedia melimpah seperti udara.`);
+add('s', `Lapisan atmosfer tempat terjadinya hujan, awan, dan angin adalah ....`, `troposfer`, [`stratosfer`, `mesosfer`, `termosfer`],
+  `Troposfer adalah lapisan atmosfer paling bawah, tebalnya sekitar 12 km. Seluruh peristiwa cuaca terjadi di lapisan ini.`);
+add('s', `Lapisan ozon yang melindungi makhluk hidup dari sinar ultraviolet terdapat pada lapisan ....`, `stratosfer`, [`troposfer`, `mesosfer`, `eksosfer`],
+  `Lapisan ozon terdapat di stratosfer (sekitar 15–50 km di atas Bumi). Ozon menyerap sebagian besar sinar ultraviolet dari Matahari.`);
+add('s', `Lapisan Bumi yang paling tebal adalah ....`, `mantel`, [`kerak bumi`, `inti luar`, `inti dalam`],
+  `Mantel tebalnya sekitar 2.900 km. Kerak bumi hanya sekitar 5–70 km, inti luar sekitar 2.200 km, dan inti dalam sekitar 1.200 km.`);
+add('s', `Pasangan rumah adat dan daerah asalnya yang tepat adalah ....`, `Rumah Joglo – Jawa Tengah`, [`Rumah Gadang – Papua`, `Honai – Sumatra Barat`, `Tongkonan – Bali`],
+  `Rumah Gadang berasal dari Sumatra Barat, Honai dari Papua, dan Tongkonan dari Toraja (Sulawesi Selatan). Rumah Joglo adalah rumah adat Jawa Tengah.`);
+add('s', `Kain ulos merupakan kain tenun khas suku ....`, `Batak`, [`Dayak`, `Bugis`, `Asmat`],
+  `Ulos adalah kain tenun suku Batak dari Sumatra Utara. Kain ini dipakai dalam berbagai upacara adat.`);
+add('s', `Alat musik dari bambu yang berasal dari Jawa Barat dan diakui UNESCO sebagai warisan budaya dunia pada tahun 2010 adalah ....`, `angklung`, [`sasando`, `gamelan`, `tifa`],
+  `Angklung diakui UNESCO pada tahun 2010. Sasando berasal dari Nusa Tenggara Timur, gamelan dari Jawa dan Bali, dan tifa dari Maluku dan Papua.`);
+add('s', `Bangsa Barat yang pertama kali datang ke Maluku untuk mencari rempah-rempah adalah ....`, `Portugis`, [`Belanda`, `Inggris`, `Prancis`],
+  `Portugis merebut Malaka pada 1511 lalu tiba di Maluku pada 1512. Belanda baru datang pada 1596 melalui Banten.`);
+add('s', `Perserikatan dagang Belanda, VOC, dibentuk pada tahun ....`, `1602`, [`1511`, `1596`, `1799`],
+  `VOC dibentuk tahun 1602 untuk memonopoli perdagangan rempah-rempah dan dibubarkan tahun 1799. Tahun 1596 adalah kedatangan Cornelis de Houtman di Banten, sedangkan 1511 Portugis menguasai Malaka.`);
+add('s', `Sistem Tanam Paksa (Cultuurstelsel) diterapkan oleh Gubernur Jenderal ....`, `Johannes van den Bosch`, [`Herman Willem Daendels`, `Thomas Stamford Raffles`, `Jan Pieterszoon Coen`],
+  `Tanam Paksa dimulai tahun 1830 oleh Johannes van den Bosch. Daendels membangun Jalan Raya Pos, Raffles dari Inggris menerapkan sewa tanah, dan Coen mendirikan Batavia.`);
+add('s', `Daerah penghasil timah terbesar di Indonesia adalah ....`, `Kepulauan Bangka Belitung`, [`Papua`, `Kalimantan Timur`, `Nusa Tenggara Timur`],
+  `Timah banyak ditambang di Pulau Bangka dan Belitung. Papua terkenal dengan tambang emas dan tembaga, sedangkan Kalimantan Timur dengan batu bara.`);
+add('s', `Pernyataan yang benar tentang sumber daya alam adalah ....`, `hutan dapat diperbarui asalkan ditanam kembali dan dikelola dengan baik`, [`minyak bumi dapat diperbarui dalam waktu satu tahun`, `batu bara dan gas alam tidak akan pernah habis`, `sinar matahari termasuk sumber daya alam yang tidak dapat diperbarui`],
+  `Hutan termasuk sumber daya alam yang dapat diperbarui jika dikelola dengan baik. Minyak bumi, batu bara, dan gas alam butuh jutaan tahun untuk terbentuk. Sinar matahari tidak akan habis.`);
+add('s', `Letak astronomis Indonesia adalah ....`, `6° LU – 11° LS dan 95° BT – 141° BT`, [`11° LU – 6° LS dan 95° BT – 141° BT`, `6° LU – 11° LS dan 95° BB – 141° BB`, `6° LU – 11° LS dan 105° BT – 150° BT`],
+  `Indonesia terletak antara 6° Lintang Utara sampai 11° Lintang Selatan, dan antara 95° sampai 141° Bujur Timur. Karena dilalui garis khatulistiwa, Indonesia beriklim tropis.`);
+add('s', `Indonesia hanya memiliki dua musim, yaitu musim hujan dan musim kemarau. Hal ini terutama dipengaruhi oleh ....`, `angin muson`, [`angin fohn`, `angin laut`, `angin lembah`],
+  `Angin muson (angin musim) berganti arah setiap setengah tahun. Muson barat membawa uap air dan menyebabkan musim hujan, sedangkan muson timur bersifat kering dan menyebabkan musim kemarau.`);
+add('s', `Fauna Indonesia tipe Australis yang hidup di Papua adalah ....`, `Cendrawasih`, [`Harimau Sumatra`, `Orangutan`, `Badak Jawa`],
+  `Fauna tipe Australis mirip dengan fauna Australia dan ditemukan di Papua, misalnya cendrawasih, kasuari, dan kanguru pohon. Harimau, orangutan, dan badak termasuk fauna tipe Asiatis (barat Garis Wallace).`);
+add('s', `Padma raksasa (Rafflesia arnoldii) ditetapkan sebagai puspa ....`, `langka`, [`bangsa`, `pesona`, `kebanggaan`],
+  `Tiga puspa nasional Indonesia: melati putih sebagai puspa bangsa, anggrek bulan sebagai puspa pesona, dan padma raksasa sebagai puspa langka.`);
+add('s', `Air hujan yang meresap ke dalam tanah dan menjadi air tanah disebut ....`, `infiltrasi`, [`evaporasi`, `kondensasi`, `transpirasi`],
+  `Infiltrasi adalah peresapan air ke dalam tanah. Evaporasi adalah penguapan, kondensasi adalah pengembunan uap menjadi awan, dan transpirasi adalah penguapan lewat tumbuhan.`);
+
+</script>
+<script>
+/* Latar 3D: bangun ruang berkerangka yang melayang pelan (Three.js) */
+(function () {
+  var canvas = document.getElementById('bg3d');
+  if (!canvas || !window.THREE) { return; }
+  var renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false }); } catch (e) { return; }
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x000000, 1);
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+  camera.position.set(0, 0, 16);
+  var target = new THREE.Color(0x38bdf8);
+
+  var geos = [
+    new THREE.IcosahedronGeometry(1.7),
+    new THREE.OctahedronGeometry(1.6),
+    new THREE.DodecahedronGeometry(1.5),
+    new THREE.TetrahedronGeometry(1.8),
+    new THREE.BoxGeometry(2.1, 2.1, 2.1),
+    new THREE.TorusGeometry(1.2, 0.45, 10, 20),
+    new THREE.ConeGeometry(1.4, 2.6, 6),
+    new THREE.CylinderGeometry(1, 1, 2.3, 10)
+  ];
+  var anchors = [[-0.86, 0.74], [0.86, 0.7], [-0.93, -0.02], [0.93, 0.02], [-0.76, -0.8], [0.8, -0.78], [0.1, 0.93], [-0.12, -0.95]];
+  var items = geos.map(function (g, i) {
+    var grp = new THREE.Group();
+    var mat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.8 });
+    var lines = new THREE.LineSegments(new THREE.EdgesGeometry(g, 20), mat);
+    var solid = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.07, side: THREE.DoubleSide }));
+    grp.add(solid); grp.add(lines);
+    grp.rotation.set(i * 0.7, i * 1.1, 0);
+    scene.add(grp);
+    return { grp: grp, mat: mat, solid: solid, a: anchors[i], x: 0, y: 0, s: 1 };
+  });
+
+  function layout() {
+    var w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    var vh = 2 * Math.tan((camera.fov * Math.PI / 180) / 2) * camera.position.z;
+    var vw = vh * camera.aspect;
+    var s = w < 640 ? 0.62 : 1;
+    items.forEach(function (it) {
+      it.x = it.a[0] * vw / 2; it.y = it.a[1] * vh / 2; it.s = s;
+      it.grp.position.x = it.x; it.grp.position.y = it.y; it.grp.scale.setScalar(s);
+    });
+    if (reduce) { renderer.render(scene, camera); }
+  }
+  window.addEventListener('resize', layout);
+  layout();
+
+  var energy = 0, shake = 0, px = 0, py = 0, last = performance.now(), running = !reduce;
+  window.addEventListener('pointermove', function (e) {
+    px = (e.clientX / window.innerWidth - 0.5) * 2;
+    py = (e.clientY / window.innerHeight - 0.5) * 2;
+  }, { passive: true });
+
+  function frame(now) {
+    if (!running) { return; }
+    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    energy *= Math.pow(0.03, dt);
+    shake *= Math.pow(0.02, dt);
+    items.forEach(function (it, i) {
+      var sp = (0.22 + i * 0.05) * (1 + energy * 9);
+      it.grp.rotation.x += sp * dt;
+      it.grp.rotation.y += sp * 1.3 * dt;
+      it.grp.scale.setScalar(it.s * (1 + energy * 0.4));
+      it.grp.position.y = it.y + Math.sin(now / 1000 * 0.6 + i) * 0.35;
+      it.mat.color.lerp(target, 0.06);
+      it.solid.material.color.copy(it.mat.color);
+    });
+    camera.position.x = px * 1.1 + (Math.random() - 0.5) * shake;
+    camera.position.y = -py * 0.7 + (Math.random() - 0.5) * shake;
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  if (!reduce) { requestAnimationFrame(frame); }
+  document.addEventListener('visibilitychange', function () {
+    if (reduce) { return; }
+    if (document.hidden) { running = false; } else { running = true; last = performance.now(); requestAnimationFrame(frame); }
+  });
+
+  window.arena3d = {
+    theme: function (hex) {
+      target.set(hex);
+      if (reduce) {
+        items.forEach(function (it) { it.mat.color.copy(target); it.solid.material.color.copy(target); });
+        renderer.render(scene, camera);
+      }
+    },
+    pulse: function (ok) {
+      if (reduce) { return; }
+      if (ok) { energy = 1; } else { shake = 0.7; }
+    }
+  };
+})();
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var SUB = {
+    m: { name: 'Matematika', hex: '#38bdf8', v: 'var(--mtk)' },
+    a: { name: 'IPA', hex: '#c084fc', v: 'var(--ipa)' },
+    s: { name: 'IPS', hex: '#fb923c', v: 'var(--ips)' }
+  };
+  var LS = 'arena-mipas-v1';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var PRAISE = [
+    'Hebat sekali! Jawabanmu tepat.', 'Keren! Kamu memang jago.', 'Luar biasa! Pertahankan ya.',
+    'Mantap! Otakmu setajam sudut siku-siku.', 'Tepat sekali! Kamu pantas diacungi jempol.',
+    'Bagus! Kamu teliti dan cerdas.', 'Pintar! Ayo lanjut ke soal berikutnya.',
+    'Benar! Kamu calon juara kabupaten.', 'Wow, jitu! Kerja kerasmu terbayar.',
+    'Sempurna! Kamu memahami materinya dengan baik.'
+  ];
+
+  /* ---------- data: acak posisi jawaban dengan seed tetap ---------- */
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function shuffle(a, r) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(r() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  var R = rng(20261119), bag = [];
+  var Q = ARENA_Q;
+  Q.forEach(function (q, i) {
+    q.id = i;
+    if (!bag.length) { bag = shuffle([0, 1, 2, 3], R); }
+    var p = bag.pop();
+    var w = shuffle(q.w.slice(), R), wi = 0;
+    q.opts = [];
+    for (var k = 0; k < 4; k++) { q.opts.push(k === p ? q.c : w[wi++]); }
+    q.ci = p;
+  });
+
+  /* ---------- state ---------- */
+  var ans = load(), mode = 'all', list = [], pos = 0;
+  function load() {
+    try { var j = JSON.parse(localStorage.getItem(LS) || '{}'); return (j && typeof j === 'object') ? j : {}; } catch (e) { return {}; }
+  }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(ans)); } catch (e) { } }
+  function answered(id) { return ans[id] !== undefined; }
+  function isOk(id) { return ans[id] === Q[id].ci; }
+  function ids(m) {
+    return Q.filter(function (q) { return m === 'all' || q.sub === m; }).map(function (q) { return q.id; });
+  }
+  function stat(idList) {
+    var done = 0, ok = 0;
+    idList.forEach(function (id) { if (answered(id)) { done++; if (isOk(id)) { ok++; } } });
+    return { done: done, ok: ok, n: idList.length };
+  }
+
+  /* ---------- helpers ---------- */
+  var $ = function (s) { return document.querySelector(s); };
+  function show(which) {
+    ['sStart', 'sQuiz', 'sResult'].forEach(function (id) { $('#' + id).hidden = (id !== which); });
+    var inQuiz = which !== 'sStart';
+    $('#scorePill').hidden = !inQuiz;
+    $('#navBtn').hidden = !inQuiz;
+    window.scrollTo(0, 0);
+  }
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) { e.className = cls; }
+    if (txt !== undefined) { e.textContent = txt; }
+    return e;
+  }
+  function theme(sub) {
+    $('#sQuiz').setAttribute('data-sub', sub);
+    document.documentElement.style.setProperty('--accent', SUB[sub].v);
+    if (window.arena3d) { window.arena3d.theme(SUB[sub].hex); }
+  }
+  function fmt(n) { return String(n); }
+
+  /* ---------- gambar soal ---------- */
+  function coordSVG(f) {
+    var x0 = f.x[0], x1 = f.x[1], y0 = f.y[0], y1 = f.y[1], c = 34, pad = 26;
+    var W = (x1 - x0) * c + pad * 2, H = (y1 - y0) * c + pad * 2;
+    function X(v) { return pad + (v - x0) * c; }
+    function Y(v) { return pad + (y1 - v) * c; }
+    var s = '<svg class="fig" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" role="img" aria-label="' + f.alt + '">';
+    var i;
+    for (i = x0; i <= x1; i++) { s += '<line x1="' + X(i) + '" y1="' + Y(y0) + '" x2="' + X(i) + '" y2="' + Y(y1) + '" stroke="#2c2c3d" stroke-width="1"/>'; }
+    for (i = y0; i <= y1; i++) { s += '<line x1="' + X(x0) + '" y1="' + Y(i) + '" x2="' + X(x1) + '" y2="' + Y(i) + '" stroke="#2c2c3d" stroke-width="1"/>'; }
+    s += '<line x1="' + X(x0) + '" y1="' + Y(0) + '" x2="' + X(x1) + '" y2="' + Y(0) + '" stroke="#aaaabf" stroke-width="2"/>';
+    s += '<line x1="' + X(0) + '" y1="' + Y(y0) + '" x2="' + X(0) + '" y2="' + Y(y1) + '" stroke="#aaaabf" stroke-width="2"/>';
+    for (i = x0; i <= x1; i++) { if (i !== 0) { s += '<text x="' + X(i) + '" y="' + (Y(0) + 15) + '" font-size="11" text-anchor="middle" fill="#aaaabf" style="fill:#aaaabf;font-weight:600">' + String(i).replace('-', '−') + '</text>'; } }
+    for (i = y0; i <= y1; i++) { if (i !== 0) { s += '<text x="' + (X(0) - 7) + '" y="' + (Y(i) + 4) + '" font-size="11" text-anchor="end" fill="#aaaabf" style="fill:#aaaabf;font-weight:600">' + String(i).replace('-', '−') + '</text>'; } }
+    s += '<text x="' + (X(x1) - 2) + '" y="' + (Y(0) - 7) + '" font-size="12" text-anchor="end" fill="#f6f6fb">x</text>';
+    s += '<text x="' + (X(0) + 8) + '" y="' + (Y(y1) + 12) + '" font-size="12" fill="#f6f6fb">y</text>';
+    var pts = f.pts.map(function (p) { return X(p[1]) + ',' + Y(p[2]); }).join(' ');
+    if (f.poly) { s += '<polygon points="' + pts + '" fill="rgba(56,189,248,.16)" stroke="#38bdf8" stroke-width="2.5" stroke-linejoin="round"/>'; }
+    else if (f.line) { s += '<polyline points="' + pts + '" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="6 5" stroke-linejoin="round"/>'; }
+    f.pts.forEach(function (p) {
+      s += '<circle cx="' + X(p[1]) + '" cy="' + Y(p[2]) + '" r="5" fill="#38bdf8" stroke="#000" stroke-width="1.5"/>';
+      s += '<text x="' + (X(p[1]) + 9) + '" y="' + (Y(p[2]) - 8) + '" font-size="14" fill="#f6f6fb">' + p[0] + '</text>';
+    });
+    return s + '</svg>';
+  }
+  function arsirSVG() {
+    return '<svg class="fig" viewBox="0 0 200 200" width="200" role="img" aria-label="Persegi bersisi 14 cm dengan lingkaran berdiameter 14 cm di dalamnya. Daerah di luar lingkaran berwarna.">' +
+      '<rect x="10" y="10" width="170" height="170" fill="#fb923c" fill-opacity=".85" stroke="#fb923c" stroke-width="3"/>' +
+      '<circle cx="95" cy="95" r="85" fill="#000" stroke="#f6f6fb" stroke-width="2"/>' +
+      '<line x1="10" y1="95" x2="180" y2="95" stroke="#f6f6fb" stroke-width="1.5" stroke-dasharray="5 4"/>' +
+      '<text x="95" y="88" font-size="14" text-anchor="middle" fill="#f6f6fb">d = 14 cm</text>' +
+      '<text x="95" y="197" font-size="13" text-anchor="middle" fill="#aaaabf" style="fill:#aaaabf">sisi persegi = 14 cm</text></svg>';
+  }
+  function figHTML(f) {
+    if (!f) { return ''; }
+    if (f.t === 'coord') { return coordSVG(f); }
+    if (f.t === 'arsir') { return arsirSVG(); }
+    if (f.t === 'table') {
+      var h = '<div class="tbl-wrap"><table class="tbl"><thead><tr>' + f.head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join('') + '</tr></thead><tbody>';
+      f.rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + x + '</th>' : '<td>' + x + '</td>'; }).join('') + '</tr>'; });
+      return h + '</tbody></table></div>';
+    }
+    return '';
+  }
+
+  /* ---------- menu utama ---------- */
+  function renderModes() {
+    var box = $('#modes'); box.textContent = '';
+    var defs = [
+      { m: 'all', name: 'Semua soal', sub: 'Matematika, IPA, dan IPS', c: 'var(--fg)' },
+      { m: 'm', name: 'Matematika', sub: 'Bilangan, bangun, data, dan kecepatan', c: 'var(--mtk)' },
+      { m: 'a', name: 'IPA', sub: 'Makhluk hidup, gaya, listrik, antariksa', c: 'var(--ipa)' },
+      { m: 's', name: 'IPS', sub: 'Peta, sejarah, ekonomi, budaya', c: 'var(--ips)' }
+    ];
+    defs.forEach(function (d) {
+      var st = stat(ids(d.m));
+      var b = el('button', 'mode'); b.type = 'button'; b.style.setProperty('--c', d.c);
+      b.appendChild(el('span', 'm-name', d.name));
+      b.appendChild(el('span', 'm-sub', d.sub));
+      b.appendChild(el('span', 'm-count', st.n + ' soal' + (st.done ? ' · terjawab ' + st.done + ' · skor ' + st.ok : '')));
+      var pr = el('span', 'm-prog'); var fill = document.createElement('i'); fill.style.width = (st.done / st.n * 100) + '%'; pr.appendChild(fill); b.appendChild(pr);
+      b.addEventListener('click', function () { start(d.m); });
+      box.appendChild(b);
+    });
+  }
+  function start(m) {
+    mode = m; list = ids(m); pos = 0;
+    for (var i = 0; i < list.length; i++) { if (!answered(list[i])) { pos = i; break; } }
+    if (stat(list).done === list.length) { showResult(); return; }
+    show('sQuiz'); renderQ();
+  }
+  function home() {
+    document.documentElement.style.setProperty('--accent', 'var(--mtk)');
+    if (window.arena3d) { window.arena3d.theme('#38bdf8'); }
+    closeNav(); renderModes(); show('sStart');
+  }
+
+  /* ---------- soal ---------- */
+  var LET = ['A', 'B', 'C', 'D'];
+  function renderQ() {
+    var q = Q[list[pos]], st = stat(list);
+    theme(q.sub);
+    $('#chip').textContent = SUB[q.sub].name;
+    $('#count').textContent = 'Soal ' + (pos + 1) + ' dari ' + list.length;
+    $('#barFill').style.width = (st.done / st.n * 100) + '%';
+    $('#barWrap').setAttribute('aria-valuenow', Math.round(st.done / st.n * 100));
+    $('#scoreNum').textContent = fmt(st.ok);
+    $('#qtext').textContent = q.q;
+    $('#fig').innerHTML = figHTML(q.fig);
+    var ol = $('#opts'); ol.textContent = '';
+    q.opts.forEach(function (t, i) {
+      var li = document.createElement('li');
+      var b = el('button', 'opt'); b.type = 'button'; b.dataset.i = i;
+      b.appendChild(el('span', 'hex', LET[i]));
+      b.appendChild(el('span', 'otext', t));
+      b.appendChild(el('span', 'mark', ''));
+      b.addEventListener('click', function (ev) { choose(i, ev); });
+      li.appendChild(b); ol.appendChild(li);
+    });
+    $('#fb').textContent = '';
+    if (answered(q.id)) { paint(q, false); }
+    $('#prev').disabled = pos === 0;
+    var nx = $('#next');
+    nx.textContent = pos === list.length - 1 ? 'Lihat skor' : 'Berikutnya ›';
+    nx.classList.toggle('primary', answered(q.id));
+  }
+  function paint(q, fresh) {
+    var chosen = ans[q.id], ok = chosen === q.ci;
+    var btns = document.querySelectorAll('#opts .opt');
+    btns.forEach(function (b, i) {
+      b.disabled = true;
+      var mk = b.querySelector('.mark');
+      if (i === q.ci) { b.classList.add('correct'); mk.textContent = '✓'; }
+      else if (i === chosen) { b.classList.add('wrong'); mk.textContent = '✗'; }
+      else { b.classList.add('dim'); }
+      if (!fresh) { b.style.animation = 'none'; }
+    });
+    var fb = $('#fb'); fb.textContent = '';
+    var box = el('div', 'fb ' + (ok ? 'good' : 'bad'));
+    if (!fresh) { box.style.animation = 'none'; }
+    if (ok) {
+      box.appendChild(el('h3', '', 'Benar! Skor +1'));
+      box.appendChild(el('p', '', PRAISE[(q.id * 7 + (fresh ? Math.floor(Math.random() * 3) : 0)) % PRAISE.length]));
+    } else {
+      box.appendChild(el('h3', '', 'Belum tepat. Skor 0'));
+      var p1 = el('p'); p1.appendChild(document.createTextNode('Jawaban yang benar: ')); p1.appendChild(el('span', 'ans', LET[q.ci] + '. ' + q.opts[q.ci])); box.appendChild(p1);
+      var p2 = el('p'); p2.appendChild(el('b', '', 'Penjelasan: ')); p2.appendChild(document.createTextNode(q.e)); box.appendChild(p2);
+    }
+    fb.appendChild(box);
+    $('#next').classList.add('primary');
+  }
+  function choose(i, ev) {
+    var q = Q[list[pos]];
+    if (answered(q.id)) { return; }
+    ans[q.id] = i; save();
+    paint(q, true);
+    var ok = i === q.ci, st = stat(list);
+    $('#scoreNum').textContent = fmt(st.ok);
+    $('#barFill').style.width = (st.done / st.n * 100) + '%';
+    $('#barWrap').setAttribute('aria-valuenow', Math.round(st.done / st.n * 100));
+    if (ok) {
+      var pill = $('#scorePill'); pill.classList.remove('bump'); void pill.offsetWidth; pill.classList.add('bump');
+      var r = ev && ev.target && ev.target.getBoundingClientRect ? ev.target.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
+      burst(r.left + Math.min(r.width, 200) / 2, r.top + r.height / 2);
+    }
+    if (window.arena3d) { window.arena3d.pulse(ok); }
+    var fb = $('#fb');
+    setTimeout(function () { try { fb.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' }); } catch (e) { } }, 60);
+  }
+  function burst(x, y) {
+    if (reduce || !document.body.animate) { return; }
+    var cols = ['#38bdf8', '#c084fc', '#fb923c', '#34d399', '#f6f6fb'];
+    var shapes = ['polygon(50% 0, 100% 100%, 0 100%)', 'polygon(0 0, 100% 0, 100% 100%, 0 100%)', 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)'];
+    for (var i = 0; i < 18; i++) {
+      var s = document.createElement('i'); s.className = 'cf';
+      s.style.left = x + 'px'; s.style.top = y + 'px';
+      s.style.background = cols[i % cols.length]; s.style.clipPath = shapes[i % 3];
+      document.body.appendChild(s);
+      var a = Math.random() * Math.PI * 2, d = 70 + Math.random() * 120;
+      var an = s.animate([
+        { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
+        { transform: 'translate(' + Math.cos(a) * d + 'px,' + (Math.sin(a) * d + 40) + 'px) rotate(' + (Math.random() * 540 - 270) + 'deg) scale(.3)', opacity: 0 }
+      ], { duration: 800 + Math.random() * 500, easing: 'cubic-bezier(.15,.8,.3,1)' });
+      an.onfinish = (function (n) { return function () { n.remove(); }; })(s);
+    }
+  }
+  function go(d) {
+    var n = pos + d;
+    if (n < 0) { return; }
+    if (n >= list.length) { showResult(); return; }
+    pos = n; renderQ(); window.scrollTo(0, 0);
+  }
+
+  /* ---------- navigator ---------- */
+  function openNav() {
+    var body = $('#ovBody'); body.textContent = '';
+    ['m', 'a', 's'].forEach(function (sub) {
+      var inSet = list.filter(function (id) { return Q[id].sub === sub; });
+      if (!inSet.length) { return; }
+      var t = el('div', 'ng-title', SUB[sub].name); t.style.setProperty('--c', SUB[sub].v); body.appendChild(t);
+      var g = el('div', 'ng');
+      inSet.forEach(function (id) {
+        var b = el('button', 'nq', String(list.indexOf(id) + 1)); b.type = 'button';
+        b.setAttribute('aria-label', 'Soal ' + (list.indexOf(id) + 1) + (answered(id) ? (isOk(id) ? ', benar' : ', salah') : ', belum dijawab'));
+        if (answered(id)) { b.classList.add(isOk(id) ? 'ok' : 'no'); }
+        if (id === list[pos] && !$('#sQuiz').hidden) { b.classList.add('cur'); }
+        b.addEventListener('click', function () { pos = list.indexOf(id); closeNav(); show('sQuiz'); renderQ(); });
+        g.appendChild(b);
+      });
+      body.appendChild(g);
+    });
+    $('#ov').hidden = false; $('#ovClose').focus();
+  }
+  function closeNav() { $('#ov').hidden = true; }
+
+  /* ---------- hasil ---------- */
+  function showResult() {
+    closeNav();
+    var st = stat(list);
+    theme('m'); document.documentElement.style.setProperty('--accent', 'var(--good)');
+    show('sResult');
+    $('#scoreNum').textContent = fmt(st.ok);
+    $('#rScore').textContent = st.ok;
+    $('#rOf').textContent = 'dari ' + st.n + ' soal';
+    var pct = st.n ? st.ok / st.n * 100 : 0;
+    $('#ring').style.setProperty('--p', pct.toFixed(1));
+    var msg, ttl;
+    if (st.done < st.n) { ttl = 'Latihan belum selesai'; msg = 'Kamu baru menjawab ' + st.done + ' dari ' + st.n + ' soal. Lanjutkan dulu untuk melihat skor akhirmu.'; }
+    else if (pct >= 85) { ttl = 'Luar biasa, siap juara!'; msg = 'Skormu sangat tinggi. Terus berlatih agar tetap tajam di hari lomba.'; }
+    else if (pct >= 70) { ttl = 'Bagus sekali!'; msg = 'Sedikit lagi menuju juara. Baca ulang penjelasan soal yang salah, lalu coba lagi.'; }
+    else if (pct >= 50) { ttl = 'Terus semangat!'; msg = 'Kamu sudah separuh jalan. Pelajari penjelasan soal yang salah supaya makin paham.'; }
+    else { ttl = 'Jangan menyerah!'; msg = 'Setiap soal yang salah adalah kesempatan belajar. Baca penjelasannya, lalu ulangi latihan.'; }
+    $('#rttl').textContent = ttl; $('#rMsg').textContent = msg;
+    var rows = $('#rRows'); rows.textContent = '';
+    ['m', 'a', 's'].forEach(function (sub) {
+      var sl = list.filter(function (id) { return Q[id].sub === sub; });
+      if (!sl.length) { return; }
+      var s2 = stat(sl);
+      var r = el('div', 'row'); r.style.setProperty('--c', SUB[sub].v);
+      r.appendChild(el('b', '', SUB[sub].name));
+      var bar = el('div', 'bar'); var f = document.createElement('i'); f.style.width = (s2.ok / s2.n * 100) + '%'; bar.appendChild(f); r.appendChild(bar);
+      r.appendChild(el('span', '', s2.ok + ' / ' + s2.n));
+      rows.appendChild(r);
+    });
+    $('#rReview').textContent = st.done < st.n ? 'Lanjutkan latihan' : 'Tinjau soal';
+    resetArmed = false; $('#rReset').textContent = 'Ulangi dari awal';
+  }
+  var resetArmed = false;
+
+  /* ---------- events ---------- */
+  $('#home').addEventListener('click', home);
+  $('#navBtn').addEventListener('click', openNav);
+  $('#ovClose').addEventListener('click', closeNav);
+  $('#ovResult').addEventListener('click', showResult);
+  $('#prev').addEventListener('click', function () { go(-1); });
+  $('#next').addEventListener('click', function () { go(1); });
+  $('#rHome').addEventListener('click', home);
+  $('#rReview').addEventListener('click', function () {
+    var st = stat(list), p = 0;
+    for (var i = 0; i < list.length; i++) { if (!answered(list[i])) { p = i; break; } }
+    pos = st.done < st.n ? p : 0; show('sQuiz'); renderQ();
+  });
+  $('#rReset').addEventListener('click', function () {
+    if (!resetArmed) { resetArmed = true; this.textContent = 'Yakin? Klik sekali lagi'; return; }
+    list.forEach(function (id) { delete ans[id]; }); save();
+    pos = 0; show('sQuiz'); renderQ();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) { return; }
+    if (!$('#ov').hidden) { if (e.key === 'Escape') { closeNav(); } return; }
+    if ($('#sQuiz').hidden) { return; }
+    var k = e.key.toLowerCase(), idx = 'abcd'.indexOf(k);
+    if (idx < 0 && '1234'.indexOf(k) > -1 && k.length === 1) { idx = Number(k) - 1; }
+    if (idx > -1 && k.length === 1) { choose(idx); return; }
+    if (e.key === 'ArrowRight') { go(1); }
+    else if (e.key === 'ArrowLeft') { go(-1); }
+  });
+
+  home();
+})();
+
+</script>
+
+</body></html>
